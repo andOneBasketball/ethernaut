@@ -15,7 +15,13 @@ const ETHERNAUT_ABI = [
         type: "address",
       },
       {
-        indexed: false,
+        indexed: true,
+        internalType: "contract instance",
+        name: "instance",
+        type: "address",
+      },
+      {
+        indexed: true,
         internalType: "contract Level",
         name: "level",
         type: "address",
@@ -24,7 +30,7 @@ const ETHERNAUT_ABI = [
     name: "LevelCompletedLog",
     type: "event",
     signature:
-      "0x9dfdf7e3e630f506a3dfe38cdbe34e196353364235df33e5a3b588488d9a1e78",
+      "0x5038a30b900118d4e513ba62ebd647a96726a6f81b8fda73c21e9da45df5423d",
   },
   {
     anonymous: false,
