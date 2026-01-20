@@ -1,8 +1,7 @@
-import { Contract, Signer } from "ethers";
-import { LogDescription } from "ethers/lib/utils";
+import { Contract, Signer, LogDescription } from "ethers";
 import { ethers } from "hardhat";
 
-export const ETHERNAUT_ADDRESS = `0xD991431D8b033ddCb84dAD257f4821E9d5b38C33`;
+export const ETHERNAUT_ADDRESS = `0xa3e7317E591D5A0F1c605be1b3aC4D2ae56104d6`;
 
 // manually copied from the website while inspect the web console's `ethernaut.abi`
 const ETHERNAUT_ABI = [
@@ -37,16 +36,22 @@ const ETHERNAUT_ABI = [
         type: "address",
       },
       {
-        indexed: false,
+        indexed: true,
         internalType: "address",
         name: "instance",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "level",
         type: "address",
       },
     ],
     name: "LevelInstanceCreatedLog",
     type: "event",
     signature:
-      "0x7bf7f1ed7f75e83b76de0ff139966989aff81cb85aac26469c18978d86aac1c2",
+      "0x8be8bd7b4324b3d47aca5c3f64cb70e8f645e6fe94da668699951658f6384179",
   },
   {
     anonymous: false,
@@ -158,12 +163,14 @@ export const submitLevel = async (address: string) => {
       ETHERNAUT_ADDRESS
     );
     let tx = await ethernaut.submitLevelInstance(address);
-    await tx.wait();
+    const receipt = await tx.wait();
 
-    const txReceipt = await ethernaut.provider!.getTransactionReceipt(tx.hash);
-    if (txReceipt.logs.length === 0) return false;
+    if (receipt.logs.length === 0) return false;
 
-    const event = ethernaut.interface.parseLog(txReceipt.logs[0]);
+    const event = ethernaut.interface.parseLog({
+      topics: receipt.logs[0].topics,
+      data: receipt.logs[0].data
+    });
     return event.name === `LevelCompletedLog`;
   } catch (error) {
     console.error(`submitLevel: ${error.message}`);
@@ -183,19 +190,28 @@ export const createChallenge = async (
     let tx = await ethernaut.createLevelInstance(contractLevel, {
       value,
     });
-    await tx.wait();
+    const receipt = await tx.wait();
 
-    const txReceipt = await ethernaut.provider!.getTransactionReceipt(tx.hash);
-    if (txReceipt.logs.length === 0) throw new Error(`No event found`);
-    const events: LogDescription[] = txReceipt.logs
+    // console.log('Receipt logs:', receipt.logs);
+
+    if (receipt.logs.length === 0) throw new Error(`No event found`);
+    const events: LogDescription[] = receipt.logs
       .map((log) => {
         try {
-          return ethernaut.interface.parseLog(log);
-        } catch {
+          const parsed = ethernaut.interface.parseLog({
+            topics: log.topics,
+            data: log.data
+          });
+          // console.log('Parsed log:', parsed);
+          return parsed;
+        } catch (e) {
+          // console.log('Failed to parse log:', log, e.message);
           return undefined;
         }
       })
       .filter(Boolean) as LogDescription[];
+
+    // console.log('Events:', events);
 
     const event = events.find(
       (event) => event.name === `LevelInstanceCreatedLog` && event.args.instance

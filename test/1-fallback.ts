@@ -14,20 +14,20 @@ before(async () => {
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`Fallback`);
   const challengeAddress = await createChallenge(
-    `0x9CB391dbcD447E645D6Cb55dE6ca23164130D008`
+    `0x3c34A342b2aF5e885FcaA3800dB5B205fEfa3ffB`
   );
   challenge = await challengeFactory.attach(challengeAddress);
 });
 
 it("solves the challenge", async function () {
   tx = await challenge.contribute({
-    value: ethers.utils.parseUnits(`1`, `wei`),
+    value: ethers.parseUnits(`1`, `wei`),
   });
   await tx.wait();
 
   tx = await eoa.sendTransaction({
-    to: challenge.address,
-    value: ethers.utils.parseUnits(`1`, `wei`),
+    to: challenge.target,
+    value: ethers.parseUnits(`1`, `wei`),
   });
   await tx.wait();
 
@@ -36,5 +36,5 @@ it("solves the challenge", async function () {
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target), "level not solved").to.be.true;
 });

@@ -109,7 +109,8 @@ const abi = [
 before(async () => {
   accounts = await ethers.getSigners();
   [eoa] = accounts;
-  const challengeAddress = await createChallenge(`0x4E73b858fD5D7A5fc1c3455061dE52a53F35d966`)
+  // const challengeAddress = await createChallenge(`0x5890cDe18dc3B2571A47E4C6A20acD0Ce3134fc9`)
+  const challengeAddress = "0x5890cDe18dc3B2571A47E4C6A20acD0Ce3134fc9"
   challenge = await ethers.getContractAt(
     abi,
     challengeAddress,
@@ -118,6 +119,7 @@ before(async () => {
 
 it("solves the challenge", async function () {
   const infos = await Promise.all([
+    challenge.getCleared(),
     challenge.info(),
     challenge.info1(),
     challenge.info2(`hello`),
@@ -129,15 +131,16 @@ it("solves the challenge", async function () {
   console.log(infos.join(`\n`));
 
   const password = await challenge.password()
-  console.log(`password = ${password}`)
+  console.log(`password = ${password}, address = ${challenge.target}`)
   // can we somehow get it from constructor arguments? seems to accept a _password
   // const deploymentTx = await eoa.provider!.getTransaction(`0x047c8f63435250a79ede096557b94de95a4c5f282f0c041951b42a2d70bcd149`)
   // console.log(`Tx data:`, deploymentTx.data, Buffer.from(deploymentTx.data, `hex`).toString(`utf8`))
 
-  tx = await challenge.authenticate(password)
+  tx = await challenge.authenticate(password, { gasLimit: 100000 })
+  console.log("tx hash:", tx.hash)
   await tx.wait()
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target), "level not solved").to.be.true;
 });

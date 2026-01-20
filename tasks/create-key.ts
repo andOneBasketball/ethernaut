@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import { task } from "hardhat/config";
-import "@nomiclabs/hardhat-waffle";
+import "@nomicfoundation/hardhat-toolbox";
 
 // follows ETH/BTC's BIP 39 protocol
 // https://iancoleman.io/bip39/
