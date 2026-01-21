@@ -44,7 +44,7 @@ const config = {
     },
     sepolia: {
       url: SEPOLIA_URL,
-      accounts: [PRIVATE_KEY],
+      accounts: [PRIVATE_KEY, LOCAL_PRIVATE_KEY],
       chainId: 11155111
     }
   },

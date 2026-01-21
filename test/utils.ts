@@ -173,10 +173,31 @@ export const submitLevel = async (address: string) => {
 
     if (receipt.logs.length === 0) return false;
 
-    const event = ethernaut.interface.parseLog({
-      topics: receipt.logs[0].topics,
-      data: receipt.logs[0].data
-    });
+    const events: LogDescription[] = receipt.logs
+      .map((log) => {
+        try {
+          const parsed = ethernaut.interface.parseLog({
+            topics: log.topics,
+            data: log.data
+          });
+          // console.log('Parsed log:', parsed);
+          return parsed;
+        } catch (e) {
+          // console.log('Failed to parse log:', log, e.message);
+          return undefined;
+        }
+      })
+      .filter(Boolean) as LogDescription[];
+
+    // console.log('Events:', events);
+
+    const event = events.find(
+      (event) => event.name === `LevelCompletedLog` && event.args.instance
+    );
+
+    // console.log('Event:', event);
+    // console.log(`instance: ${event?.args.instance}; player: ${event?.args.player}; level: ${event?.args.level}`);
+
     return event.name === `LevelCompletedLog`;
   } catch (error) {
     console.error(`submitLevel: ${error.message}`);
@@ -230,3 +251,25 @@ export const createChallenge = async (
     throw new Error(`createChallenge failed: ${error.message}`);
   }
 };
+
+
+export const waitNextBlock = async function waitNextBlock(tx?: any) {
+  const provider = ethers.provider;
+  const network = await provider.getNetwork();
+
+  const isLocal =
+    network.chainId === 31337n || // Hardhat
+    network.chainId === 1337n;    // Ganache
+
+  if (isLocal) {
+    await provider.send("evm_increaseTime", [1]);
+    await provider.send("evm_mine", []);
+  } else if (tx) {
+    await tx.wait(1); // wait 1 confirmation
+  } else {
+    const start = await provider.getBlockNumber();
+    while ((await provider.getBlockNumber()) === start) {
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+}

