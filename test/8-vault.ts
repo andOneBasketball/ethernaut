@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { BigNumber, Contract, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { createChallenge, submitLevel } from "./utils";
 
@@ -14,7 +14,7 @@ before(async () => {
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`Vault`);
   const challengeAddress = await createChallenge(
-    `0xf94b476063B6379A3c8b6C836efB8B3e10eDe188`
+    `0xB7257D8Ba61BD1b3Fb7249DCd9330a023a5F3670`
   );
   challenge = await challengeFactory.attach(challengeAddress);
 });
@@ -22,7 +22,7 @@ before(async () => {
 it("solves the challenge", async function () {
   // can read password from storage
   // password is at storage slot 1
-  const password = await eoa.provider!.getStorageAt(challenge.address, 1)
+  const password = await eoa.provider!.getStorage(challenge.target, 1n)
   console.log(`password = ${password} "${Buffer.from(password.slice(2), `hex`)}"`)
 
   tx = await challenge.unlock(password)
@@ -30,5 +30,5 @@ it("solves the challenge", async function () {
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target), "level not solved").to.be.true;
 });
