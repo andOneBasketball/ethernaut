@@ -14,18 +14,20 @@ before(async () => {
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`Elevator`);
   const challengeAddress = await createChallenge(
-    `0xaB4F3F2644060b2D960b0d88F0a42d1D27484687`
+    `0x6DcE47e94Fa22F8E2d8A7FDf538602B1F86aBFd2`
   );
   challenge = await challengeFactory.attach(challengeAddress);
 
   const attackerFactory = await ethers.getContractFactory(`ElevatorAttacker`);
-  attacker = await attackerFactory.deploy(challenge.address);
+  attacker = await attackerFactory.deploy(challenge.target);
+  await attacker.waitForDeployment();
 });
 
 it("solves the challenge", async function () {
   tx = await attacker.attack();
+  await tx.wait();
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target), "level not solved").to.be.true;
 });

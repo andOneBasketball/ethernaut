@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { BigNumber, Contract, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { createChallenge, submitLevel } from "./utils";
 
@@ -14,31 +14,32 @@ before(async () => {
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`Reentrance`);
   const challengeAddress = await createChallenge(
-    `0x848fb2124071146990c7abE8511f851C7f527aF4`,
-    ethers.utils.parseUnits(`1`, `ether`)
+    `0x2a24869323C0B13Dff24E196Ba072dC790D52479`,
+    ethers.parseUnits(`0.001`, `ether`)
   );
   challenge = await challengeFactory.attach(challengeAddress);
 
   const attackerFactory = await ethers.getContractFactory(`ReentranceAttacker`);
-  attacker = await attackerFactory.deploy(challenge.address);
+  attacker = await attackerFactory.deploy(challenge.target);
+  await attacker.waitForDeployment();
 });
 
 it("solves the challenge", async function () {
   console.log(
     `Challenge balance`,
-    (await challenge.provider.getBalance(challenge.address)).toString()
+    (await eoa.provider!.getBalance(challenge.target)).toString()
   );
   tx = await attacker.attack({
-    value: ethers.utils.parseUnits(`1`, `ether`),
-    gasLimit: BigNumber.from(`200000`)
+    value: ethers.parseUnits(`0.0001`, `ether`),
+    gasLimit: 500000n
   });
   await tx.wait();
   console.log(
     `Challenge balance`,
-    (await challenge.provider.getBalance(challenge.address)).toString()
+    (await eoa.provider!.getBalance(challenge.target)).toString()
   );
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target), "level not solved").to.be.true;
 });

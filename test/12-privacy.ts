@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { BigNumber, Contract, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { createChallenge, submitLevel } from "./utils";
 
@@ -14,7 +14,7 @@ before(async () => {
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`Privacy`);
   const challengeAddress = await createChallenge(
-    `0x11343d543778213221516D004ED82C45C3c8788B`
+    `0x131c3249e115491E83De375171767Af07906eA36`
   );
   challenge = await challengeFactory.attach(challengeAddress);
 });
@@ -30,17 +30,18 @@ it("solves the challenge", async function () {
   // 5: data[2]
   const storageSlots = [0, 1, 2, 3, 4, 5, 6]
   for(const slot of storageSlots) {
-    const slotData = await eoa.provider!.getStorageAt(challenge.address, slot)
-    console.log(`${slot}:\t ${slotData} (${BigNumber.from(slotData).toString()})`)
+    const slotData = await eoa.provider!.getStorage(challenge.target, slot)
+    console.log(`${slot}:\t ${slotData} (${BigInt(slotData).toString()}
+)`)
   }
 
   console.log(`Printing data static array`)
   for(const slot of [0, 1, 2]) {
-    const slotData = await eoa.provider!.getStorageAt(challenge.address, 3 + slot)
-    console.log(`data[${slot}]:\t ${slotData} (${Buffer.from(slotData, `hex`).toString(`utf8`)})`)
+    const slotData = await eoa.provider!.getStorage(challenge.target, 3 + slot)
+    console.log(`data[${slot}]:\t ${slotData} (${Buffer.from(slotData.slice(2), `hex`).toString(`utf8`)})`)
   }
 
-  const keyData = await eoa.provider!.getStorageAt(challenge.address, 5 /* data[2] */)
+  const keyData = await eoa.provider!.getStorage(challenge.target, 5 /* data[2] */)
   // seems to take the most significant bits data[2][0..15] when doing bytes16(data[2])
   const key16 = `${keyData.slice(0, 34)}` // bytes16 = 16 bytes
   tx = await challenge.unlock(key16)
@@ -48,5 +49,5 @@ it("solves the challenge", async function () {
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target), "level not solved").to.be.true;
 });

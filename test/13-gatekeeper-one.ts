@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { BigNumber, Contract, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { createChallenge, submitLevel } from "./utils";
 
@@ -8,18 +8,20 @@ let eoa: Signer;
 let attacker: Contract;
 let challenge: Contract; // challenge contract
 let tx: any;
+let solved = false;
 
 before(async () => {
   accounts = await ethers.getSigners();
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`GatekeeperOne`);
   const challengeAddress = await createChallenge(
-    `0x9b261b23cE149422DE75907C6ac0C30cEc4e652A`
+    `0xb5858B8EDE0030e46C0Ac1aaAedea8Fb71EF423C`
   );
   challenge = await challengeFactory.attach(challengeAddress);
 
   const attackerFactory = await ethers.getContractFactory(`GatekeeperOneAttacker`);
-  attacker = await attackerFactory.deploy(challenge.address);
+  attacker = await attackerFactory.deploy(challenge.target);
+  await attacker.waitForDeployment();
 });
 
 it("solves the challenge", async function () {
@@ -35,20 +37,35 @@ it("solves the challenge", async function () {
   // tx.orign = 0x48490375809Cf5Af9D635C7860BD7F83f9f2D74c
 
   // use this to bruteforce gas usage
-  const MOD = 8191
-  const gasToUse = 800000
-  for(let i = 0; i < MOD; i++) {
-    console.log(`testing ${gasToUse + i}`)
+
+  const tx = await attacker.attack(gateKey, {
+    gasLimit: 10000000n
+  });
+  const receipt = await tx.wait();
+
+  let success = false;
+
+  for (const log of receipt.logs) {
     try {
-      tx = await attacker.attack(gateKey, gasToUse + i, {
-        gasLimit: `950000`
-      });
-      break;
-    } catch {}
+      const parsed = attacker.interface.parseLog(log);
+      if (parsed && parsed.name === "AttackSuccess") {
+        console.log("✅ Attack success!", parsed);
+        console.log("gas offset:", parsed.args.gasOffset.toString());
+        success = true;
+      }
+    } catch (e) {
+      // Ignore logs that cannot be parsed as attacker contract events.
+    }
   }
 
+  if (!success) {
+    console.log("❌ No AttackSuccess event found");
+  }
+  expect(success).to.be.true;
+  solved = success;
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  if (!solved) return;
+  expect(await submitLevel(challenge.target as string), "level not solved").to.be.true;
 });

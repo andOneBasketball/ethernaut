@@ -37,6 +37,10 @@ const config = {
     ],
   },
   networks: {
+    localhost: {
+      chainId: 31337,
+      accounts: [LOCAL_PRIVATE_KEY, LOCAL_PRIVATE_KEY],
+    },
     eth: {
       url: ETH_URL,
       accounts: [PRIVATE_KEY],
