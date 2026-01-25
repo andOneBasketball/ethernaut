@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { BigNumber, Contract, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { createChallenge, submitLevel } from "./utils";
 
@@ -14,7 +14,7 @@ before(async () => {
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`NaughtCoin`);
   const challengeAddress = await createChallenge(
-    `0x096bb5e93a204BfD701502EB6EF266a950217218`
+    `0x80934BE6B8B872B364b470Ca30EaAd8AEAC4f63F`
   );
   challenge = await challengeFactory.attach(challengeAddress);
 });
@@ -32,5 +32,5 @@ it("solves the challenge", async function () {
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target as string), "level not solved").to.be.true;
 });

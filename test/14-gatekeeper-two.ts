@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { BigNumber, Contract, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { createChallenge, submitLevel } from "./utils";
 
@@ -14,7 +14,7 @@ before(async () => {
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`GatekeeperTwo`);
   const challengeAddress = await createChallenge(
-    `0xdCeA38B2ce1768E1F409B6C65344E81F16bEc38d`
+    `0x0C791D1923c738AC8c4ACFD0A60382eE5FF08a23`
   );
   challenge = await challengeFactory.attach(challengeAddress);
 });
@@ -24,9 +24,10 @@ it("solves the challenge", async function () {
     `GatekeeperTwoAttacker`
   );
   // attack is done in constructor
-  attacker = await attackerFactory.deploy(challenge.address);
+  attacker = await attackerFactory.deploy(challenge.target);
+  await attacker.waitForDeployment();
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target as string), "level not solved").to.be.true;
 });
