@@ -29,14 +29,14 @@ it("solves the challenge", async function () {
   // 4: data[1]
   // 5: data[2]
   const storageSlots = [0, 1, 2, 3, 4, 5, 6]
-  for(const slot of storageSlots) {
+  for (const slot of storageSlots) {
     const slotData = await eoa.provider!.getStorage(challenge.target, slot)
     console.log(`${slot}:\t ${slotData} (${BigInt(slotData).toString()}
 )`)
   }
 
   console.log(`Printing data static array`)
-  for(const slot of [0, 1, 2]) {
+  for (const slot of [0, 1, 2]) {
     const slotData = await eoa.provider!.getStorage(challenge.target, 3 + slot)
     console.log(`data[${slot}]:\t ${slotData} (${Buffer.from(slotData.slice(2), `hex`).toString(`utf8`)})`)
   }
@@ -49,5 +49,5 @@ it("solves the challenge", async function () {
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.target), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target as string), "level not solved").to.be.true;
 });

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { BigNumber, Contract, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { createChallenge, submitLevel } from "./utils";
 
@@ -14,12 +14,13 @@ before(async () => {
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`MagicNum`);
   const challengeAddress = await createChallenge(
-    `0x200d3d9Ac7bFd556057224e7aEB4161fED5608D0`
+    `0x2132C7bc11De7A90B87375f282d36100a29f97a9`
   );
   challenge = await challengeFactory.attach(challengeAddress);
 
   const attackerFactory = await ethers.getContractFactory(`MagicNumAttacker`);
-  attacker = await attackerFactory.deploy(challenge.address)
+  attacker = await attackerFactory.deploy(challenge.target);
+  await attacker.waitForDeployment();
 });
 
 it("solves the challenge", async function () {
@@ -28,5 +29,5 @@ it("solves the challenge", async function () {
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target as string), "level not solved").to.be.true;
 });

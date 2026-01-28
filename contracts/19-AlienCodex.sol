@@ -1,6 +1,5 @@
 pragma solidity ^0.5.0;
 
-
 /**
  * @dev Contract module which provides a basic access control mechanism, where
  * there is an account (an owner) that can be granted exclusive access to
@@ -13,12 +12,15 @@ pragma solidity ^0.5.0;
 contract Ownable {
     address private _owner;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
-    constructor () internal {
+    constructor() internal {
         _owner = msg.sender;
     }
 
@@ -68,35 +70,37 @@ contract Ownable {
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      */
     function _transferOwnership(address newOwner) internal {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(
+            newOwner != address(0),
+            "Ownable: new owner is the zero address"
+        );
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
 }
 
 contract AlienCodex is Ownable {
+    bool public contact;
+    bytes32[] public codex;
 
-  bool public contact;
-  bytes32[] public codex;
+    modifier contacted() {
+        assert(contact);
+        _;
+    }
 
-  modifier contacted() {
-    assert(contact);
-    _;
-  }
-  
-  function make_contact() public {
-    contact = true;
-  }
+    function makeContact() public {
+        contact = true;
+    }
 
-  function record(bytes32 _content) contacted public {
-  	codex.push(_content);
-  }
+    function record(bytes32 _content) public contacted {
+        codex.push(_content);
+    }
 
-  function retract() contacted public {
-    codex.length--;
-  }
+    function retract() public contacted {
+        codex.length--;
+    }
 
-  function revise(uint i, bytes32 _content) contacted public {
-    codex[i] = _content;
-  }
+    function revise(uint256 i, bytes32 _content) public contacted {
+        codex[i] = _content;
+    }
 }

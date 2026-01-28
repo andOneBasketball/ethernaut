@@ -16,7 +16,7 @@ before(async () => {
   accomplice = accounts[1];
   console.log('eoa: ', eoa.getAddress());
   console.log('accomplice: ', accomplice.getAddress());
-  
+
   const challengeFactory = await ethers.getContractFactory(`Token`);
   const challengeAddress = await createChallenge(
     `0x478f3476358Eb166Cb7adE4666d04fbdDB56C407`
@@ -35,5 +35,5 @@ it("solves the challenge", async function () {
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.target), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target as string), "level not solved").to.be.true;
 });

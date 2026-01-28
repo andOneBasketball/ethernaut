@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { BigNumber, Contract, Signer } from "ethers";
+import { getCreateAddress, Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { createChallenge, submitLevel } from "./utils";
 
@@ -14,15 +14,20 @@ before(async () => {
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`Recovery`);
   const challengeAddress = await createChallenge(
-    `0x8d07AC34D8f73e2892496c15223297e5B22B3ABE`
+    `0xAF98ab8F2e2B24F42C661ed023237f5B7acAB048`,
+    ethers.parseUnits(`0.001`, `ether`),
   );
   challenge = await challengeFactory.attach(challengeAddress);
 });
 
 it("solves the challenge", async function () {
-  const recomputedContractAddress = ethers.utils.getContractAddress({
-    from: challenge.address,
-    nonce: BigNumber.from(`1`),
+  // Predicting the Recovery contract address
+  // The nonce used here refers to the deployer's transaction count:
+  // - nonce = 0 for the first transaction: deploying the Recovery contract
+  // - nonce = 1 for the second transaction: calling generateToken()
+  const recomputedContractAddress = getCreateAddress({
+    from: challenge.target as string,
+    nonce: 1n,
   });
   console.log(`recomputedContractAddress`, recomputedContractAddress)
 
@@ -33,5 +38,5 @@ it("solves the challenge", async function () {
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target as string), "level not solved").to.be.true;
 });

