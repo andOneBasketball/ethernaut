@@ -1,4 +1,4 @@
-import { Contract, Signer, LogDescription } from "ethers";
+import { Contract, Signer, LogDescription, Log } from "ethers";
 import { ethers } from "hardhat";
 
 export const ETHERNAUT_ADDRESS = `0xa3e7317E591D5A0F1c605be1b3aC4D2ae56104d6`;
@@ -174,7 +174,7 @@ export const submitLevel = async (address: string) => {
     if (receipt.logs.length === 0) return false;
 
     const events: LogDescription[] = receipt.logs
-      .map((log) => {
+      .map((log: Log) => {
         try {
           const parsed = ethernaut.interface.parseLog({
             topics: log.topics,
@@ -198,9 +198,9 @@ export const submitLevel = async (address: string) => {
     // console.log('Event:', event);
     // console.log(`instance: ${event?.args.instance}; player: ${event?.args.player}; level: ${event?.args.level}`);
 
-    return event.name === `LevelCompletedLog`;
+    return event!.name === `LevelCompletedLog`;
   } catch (error) {
-    console.error(`submitLevel: ${error.message}`);
+    console.error(`submitLevel: ${error instanceof Error ? error.message : String(error)}`);
     return false;
   }
 };
@@ -223,7 +223,7 @@ export const createChallenge = async (
 
     if (receipt.logs.length === 0) throw new Error(`No event found`);
     const events: LogDescription[] = receipt.logs
-      .map((log) => {
+      .map((log: Log) => {
         try {
           const parsed = ethernaut.interface.parseLog({
             topics: log.topics,
@@ -247,8 +247,8 @@ export const createChallenge = async (
 
     return event.args.instance;
   } catch (error) {
-    console.error(`createChallenge: ${error.message}`);
-    throw new Error(`createChallenge failed: ${error.message}`);
+    console.error(`createChallenge: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`createChallenge failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
